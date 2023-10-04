@@ -1,0 +1,35 @@
+#join {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#join .input {
+    border: none;
+    border-radius: 10px;
+    color: var(--primary-color);
+    background-color: white;
+    height: 50px;
+    user-select: auto;
+    font-size: 20px;
+}
+
+#join .textinput {
+    padding-left: 15px;
+}
+
+#join .form {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    max-width: 95%;
+}
+
+#join label{
+    display: block;
+    color: white;
+}

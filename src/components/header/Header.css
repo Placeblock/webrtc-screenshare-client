@@ -1,0 +1,25 @@
+#header {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 20px;
+    background-color: var(--background-light-color);
+    box-shadow: 0 0 10px black;
+    display: flex;
+    justify-content: space-between;
+}
+
+#header-title {
+    color: var(--secondary-color);
+    margin: 0px;
+    font-size: 27px;
+}
+
+#header-items {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+#auto-share label {
+    color: var(--secondary-color);
+}

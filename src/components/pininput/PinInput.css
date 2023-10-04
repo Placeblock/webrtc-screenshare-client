@@ -1,0 +1,18 @@
+.pin-item {
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    appearance: textfield;
+    -moz-appearance: textfield;
+    width: 3rem;
+    height: 3rem;
+    text-align: center;
+    background-color: white;
+}
+
+.pin-input {
+    display: flex;
+    gap: 5px;
+}

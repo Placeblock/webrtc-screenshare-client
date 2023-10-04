@@ -1,0 +1,13 @@
+#self-video {
+    position: relative;
+    display: flex;
+}
+
+#self-video p {
+    position: absolute;
+    margin: 5px;
+}
+
+#self-video video {
+    width: 100%;
+}

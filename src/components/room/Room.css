@@ -1,0 +1,12 @@
+#peers-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    margin-top: 20px;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+#peers-container .peer-frame {
+    width: 300px;
+}

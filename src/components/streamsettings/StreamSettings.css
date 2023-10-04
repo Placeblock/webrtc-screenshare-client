@@ -1,0 +1,50 @@
+.stream-settings {
+    display: flex;
+    flex-direction: column;
+}
+
+.stream-settings input {
+    margin-bottom: 15px;
+}
+
+.stream-settings label {
+    color: white;
+}
+
+.stream-settings-description {
+    margin-bottom: 20px;
+    margin-top: 0px;
+    color: white;
+}
+
+.stream-settings-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.stream-settings-controls * {
+    flex-grow: 2;
+}
+
+.save-btn {
+    font-weight: 800;
+}
+
+
+input[type="range"] {
+    -webkit-appearance: none;
+    background: transparent;
+}
+
+input[type="range"]::-moz-range-track, input[type="range"]::-webkit-slider-runnable-track {
+    background-color: var(--primary-color);
+    height: 0.5rem;
+}
+
+input[type="range"]::-webkit-slider-thumb, input[type="range"]::-moz-range-thumb {
+    -webkit-appearance: none; /* Override default look */
+    appearance: none;
+    background-color: var(--secondary-color);
+    border: none;
+    cursor: ew-resize;
+}

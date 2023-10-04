@@ -1,0 +1,42 @@
+.peer {
+    position: relative;
+    display: flex;
+}
+
+.peer video {
+    width: 100%;
+}
+
+.peer video.fullSize {
+    position: fixed;
+    width: 95%;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 5%;
+    max-height: 95%;
+    z-index: 5;
+}
+
+.peer-controls {
+    z-index: 2;
+    width: 100%;
+    position: absolute;
+    display: flex;
+    justify-content: space-between;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+.peer-controls p {
+    margin: 0px;
+}
+
+.peer-btns {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.peer-fullscreen {
+    color: var(--secondary-color);
+}

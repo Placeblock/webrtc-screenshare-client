@@ -1,0 +1,15 @@
+.room-input {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.room-input label {
+    color: white;
+}
+
+.room-input hr {
+    margin-block: 20px;
+    width: 100%;
+    border-color: white;
+}

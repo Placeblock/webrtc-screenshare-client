@@ -1,0 +1,49 @@
+:root {
+  --background-color: rgb(17, 12, 24);
+  --background-light-color: rgb(30, 24, 39);
+  --primary-color: #2d0080;
+  --secondary-color: #ffee00;
+  --negative-color: #ff3838;
+  --positive-color: #14c343;
+}
+
+* {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+*:disabled {
+  opacity: 0.5;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+  background-color: var(--background-color);
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+button:not(:disabled):hover {
+  cursor: pointer;
+}
+
+button {
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0px 0px 10px black;
+}
+
+.primary-btn {
+  background-color: var(--primary-color);
+  color: var(--secondary-color);
+}
+
+.secondary-btn {
+  background-color: var(--secondary-color);
+  color: var(--primary-color);
+}
