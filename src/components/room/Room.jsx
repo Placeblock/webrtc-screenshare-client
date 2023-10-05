@@ -7,6 +7,7 @@ import useWebSocket from "../../context/WebSocketHook";
 import PeerFrame from "../peerframe/PeerFrame";
 import SelfVideo from "../selfvideo/SelfVideo";
 
+const streamSettingsVersion = 2;
 class StreamSettings {
     minimized = {
         scaleFactor: 0.1,
@@ -16,6 +17,7 @@ class StreamSettings {
         scaleFactor: 1,
         frameRate: 30
     }
+    version = streamSettingsVersion;
     autoShare = true
     getData(fullscreen) {
         return this[fullscreen?"fullscreen":"minimized"];
@@ -66,7 +68,10 @@ export default memo(function Room() {
     useEffect(() => {
         const cookie = getCookie("streamsettings");
         if (cookie === undefined) return;
-        const settings = JSON.parse(cookie)
+        const settings = JSON.parse(cookie);
+        console.log(settings);
+        if (settings.version == undefined 
+            || settings.version != streamSettingsVersion) return;
         setStreamSettings(Object.assign(streamSettings, settings))
     }, []);
 
@@ -74,7 +79,8 @@ export default memo(function Room() {
         const newStreamSettings = new StreamSettings();
         Object.assign(newStreamSettings, s);
         setStreamSettings(newStreamSettings);
-        setCookie("streamsettings", JSON.stringify(s));
+        console.log(newStreamSettings);
+        setCookie("streamsettings", JSON.stringify(newStreamSettings));
     }
 
     return <div id="room">
@@ -103,7 +109,6 @@ export default memo(function Room() {
 
 
 function getCookie(cname) {
-    return undefined;
     let name = cname + "=";
     let decodedCookie = decodeURIComponent(document.cookie);
     let ca = decodedCookie.split(';');

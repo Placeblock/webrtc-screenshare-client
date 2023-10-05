@@ -71,7 +71,7 @@ export const WebsocketProvider = ({children}) => {
     }
 
     function connect() {
-        const socket = new WebSocket("ws://localhost:9102");
+        const socket = new WebSocket("wss://stream.codelix.de/wss");
         ws.current = socket;
 
         socket.onopen = e => {

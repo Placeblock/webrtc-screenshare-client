@@ -3,19 +3,13 @@ import { WebsocketContext } from "../../context/WebSocketContext";
 import useWebSocket from "../../context/WebSocketHook";
 import "./Peer.css";
 import { memo, useContext, useEffect, useRef, useState } from "react";
-import { faDisplay, faMaximize, faPause, faPlay } from "@fortawesome/free-solid-svg-icons";
+import { faDisplay, faMaximize, faPause, faPlay, faStop } from "@fortawesome/free-solid-svg-icons";
 import Bandwith from "./bandwith/Bandwith";
 
 const connectionConfig = {
     iceServers: [{
         urls: ["stun:stun.l.google.com:19302"]
     }],
-}
-
-const StreamState = {
-    RUNNING: 0,
-    PAUSED: 1,
-    STOPPED: 2
 }
 
 export default memo(function Peer({ peerUUID, peerName, currentStream, streamSettings }) {
@@ -34,7 +28,7 @@ export default memo(function Peer({ peerUUID, peerName, currentStream, streamSet
         politeRef.current = polite;
         _setPolite(polite);
     }
-    const [streamState, setStreamState] = useState(StreamState.STOPPED);
+    const [streamRunning, setStreamRunning] = useState(false);
     const politeNumber = useRef(Math.random());
     const [politePeer, setPolitePeer] = useState(null);
     const makingOffer = useRef(false);
@@ -45,10 +39,10 @@ export default memo(function Peer({ peerUUID, peerName, currentStream, streamSet
         sendPeerMessage("polite_request", {number: politeNumber.current})
         return () => {
             stopSending();
-            /*if (connection != null) {
+            if (connection != null) {
                 connection.close();
-            }*/
-            //setConnection(null);
+            }
+            setConnection(null);
         }
     }, []);
 
@@ -70,7 +64,7 @@ export default memo(function Peer({ peerUUID, peerName, currentStream, streamSet
     }, [streamSettings, peerFullScreen]);
 
     useEffect(() => {
-        if (streamState == StreamState.RUNNING) {
+        if (streamRunning) {
             startSending();
         }
     }, [currentStream]);
@@ -99,7 +93,7 @@ export default memo(function Peer({ peerUUID, peerName, currentStream, streamSet
             connection.addTrack(track, currentStream);
         }
         updateQuality();
-        setStreamState(StreamState.RUNNING);
+        setStreamRunning(true);
     }
 
     function stopSending() {
@@ -109,21 +103,7 @@ export default memo(function Peer({ peerUUID, peerName, currentStream, streamSet
         connection.getSenders().forEach((sender) => {
             connection.removeTrack(sender);
         })
-        setStreamState(StreamState.STOPPED);
-    }
-
-    function togglePaused() {
-        const enable = streamState == StreamState.PAUSED;
-        connection.getSenders().forEach((sender) => {
-            if (sender.track != null) {
-                sender.track.enabled = enable;
-            }
-        })
-        if (enable) {
-            setStreamState(StreamState.RUNNING);
-        } else {
-            setStreamState(StreamState.PAUSED);
-        }
+        setStreamRunning(false);
     }
 
 
@@ -214,7 +194,7 @@ export default memo(function Peer({ peerUUID, peerName, currentStream, streamSet
     useEffect(() => {
         if (polite!=null&&politePeer!=null
             &&streamSettings.autoShare
-            &&streamState == StreamState.STOPPED) {
+            &&!streamRunning) {
             startSending();
         }
     }, [polite, politePeer, streamSettings]);
@@ -229,10 +209,10 @@ export default memo(function Peer({ peerUUID, peerName, currentStream, streamSet
             <Bandwith connection={connection} />
             <div className="peer-btns">
                 {peerFullScreen&&<FontAwesomeIcon className="peer-fullscreen" icon={faMaximize} />}
-                {streamState==StreamState.RUNNING||streamState==StreamState.PAUSED?
+                {streamRunning?
                 <button className="primary-btn"
-                        onClick={togglePaused} >
-                    <FontAwesomeIcon icon={streamState==StreamState.RUNNING?faPause:faPlay} />
+                        onClick={stopSending} >
+                    <FontAwesomeIcon icon={faStop} />
                 </button>:
                 <button className="primary-btn"
                         onClick={startSending} 
