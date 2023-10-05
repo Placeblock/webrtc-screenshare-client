@@ -3,9 +3,9 @@ import StreamSettings from "../streamsettings/StreamSettings";
 import "./Header.css";
 import { memo, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import {faSliders, faDisplay, faMinimize, faMaximize} from "@fortawesome/free-solid-svg-icons"
+import {faSliders, faDisplay} from "@fortawesome/free-solid-svg-icons"
 
-export default memo(function Header({onDefaultStream, onSmallStream, onStreamSettings, streamSettings}) {
+export default memo(function Header({onDefaultStream, onStreamSettings, streamSettings}) {
     const [showSettings, setShowSettings] = useState(false);
 
     function updateSettings(s) {
@@ -16,17 +16,10 @@ export default memo(function Header({onDefaultStream, onSmallStream, onStreamSet
     return <div id="header">
         <div id="header-items">
             <h1 id="header-title">PStreamer</h1>
-            <button className="primary-btn" 
-                title="Select source which is shown when the peer's viewer is in fullscreen"
+            <button className="primary-btn" id="stream-btn"
+                title="Select source which is shown to the peers"
                 onClick={onDefaultStream}>
                     <FontAwesomeIcon icon={faDisplay}/>
-                    <FontAwesomeIcon icon={faMaximize}/>
-            </button>
-            <button className="primary-btn" 
-                title="Select source which is shown when the peer's viewer is minimized"
-                onClick={onSmallStream}>
-                    <FontAwesomeIcon icon={faDisplay}/>
-                    <FontAwesomeIcon icon={faMinimize}/>
             </button>
         </div>
         <div id="header-right">

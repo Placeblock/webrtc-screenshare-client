@@ -9,22 +9,16 @@ import SelfVideo from "../selfvideo/SelfVideo";
 
 class StreamSettings {
     minimized = {
-        width: 300
+        scaleFactor: 0.1,
+        frameRate: 10
     }
     fullscreen = {
-        width: 1920
+        scaleFactor: 1,
+        frameRate: 30
     }
-    frameRate = 30
-    fullscreenDefault = true
-    minimizedDefault = false
-    autoShare = false
-    getConstraints(key) {
-        if (key === "fullscreen" && this.fullscreenDefault) {
-            return {};
-        } else if (key === "minimized" && this.minimizedDefault) {
-            return {};
-        }
-        return {...this[key],frameRate:this.frameRate};
+    autoShare = true
+    getData(fullscreen) {
+        return this[fullscreen?"fullscreen":"minimized"];
     }
 }
 
@@ -37,7 +31,6 @@ export default memo(function Room() {
     const [uuid, setUUID] = useState(null);
     const [peers, setPeers] = useState([]);
     const [stream, setStream] = useState(null);
-    const [smallStream, setSmallStream] = useState(null);
     const [streamSettings, setStreamSettings] = useState(new StreamSettings());
 
     useEffect(() => {
@@ -53,28 +46,6 @@ export default memo(function Room() {
         }
     }, []);
 
-
-    useEffect(() => {
-        console.log("UPDATE SETTINGS");
-        if (stream != null) {
-            const streamConstraints = streamSettings.getConstraints("fullscreen");
-            stream.getTracks().forEach((track) => {
-                if (track.kind === "video") {
-                    track.applyConstraints(streamConstraints);
-                }
-            })
-        }
-        if (smallStream != null) {
-            const smallConstraints = streamSettings.getConstraints("minimized");
-            smallStream.getTracks().forEach((track) => {
-                if (track.kind === "video") {
-                    console.log("UPDATE TRACK");
-                    track.applyConstraints(smallConstraints);
-                }
-            })
-        }
-    }, [streamSettings]);
-
     useWebSocket("add_users", (data) => {
         setPeers(peers => [...peers,...data.users])
     })
@@ -84,22 +55,11 @@ export default memo(function Room() {
     })
 
     function selectDefaultStream() {
-        const constraints = streamSettings.getConstraints("fullscreen");
-        navigator.mediaDevices.getDisplayMedia({video: constraints}).then(newstream => {
-            if (stream != null) {
+        navigator.mediaDevices.getDisplayMedia().then(newstream => {
+            if (stream != null) { 
                 stream.getTracks().forEach(track => track.stop());
             }
             setStream(newstream);
-        });
-    }
-
-    function selectSmallStream() {
-        const constraints = streamSettings.getConstraints("minimized");
-        navigator.mediaDevices.getDisplayMedia({video: constraints}).then(newstream => {
-            if (smallStream != null) {
-                smallStream.getTracks().forEach(track => track.stop());
-            }
-            setSmallStream(newstream);
         });
     }
 
@@ -119,25 +79,20 @@ export default memo(function Room() {
 
     return <div id="room">
         <Header onDefaultStream={selectDefaultStream}
-                onSmallStream={selectSmallStream}
                 onStreamSettings={updateSettings}
                 streamSettings={streamSettings}/>
         <div id="peers-container">
             <PeerFrame>
                 <SelfVideo title="Own Stream" stream={stream}/>
             </PeerFrame>
-            <PeerFrame>
-                <SelfVideo title="Own Small Stream" stream={smallStream}/>
-            </PeerFrame>
             {
                 peers.map((p, i) => {
                     return <PeerFrame key={p.uuid}>
                         <Peer 
+                        streamSettings={streamSettings}
                         peerName={p.name} 
                         peerUUID={p.uuid}
-                        autoShare={streamSettings.autoShare}
-                        currentStream={stream}
-                        smallStream={smallStream} />
+                        currentStream={stream} />
                     </PeerFrame>
                 })
             }
@@ -148,6 +103,7 @@ export default memo(function Room() {
 
 
 function getCookie(cname) {
+    return undefined;
     let name = cname + "=";
     let decodedCookie = decodeURIComponent(document.cookie);
     let ca = decodedCookie.split(';');

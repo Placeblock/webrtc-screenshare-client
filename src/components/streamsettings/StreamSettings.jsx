@@ -2,24 +2,22 @@ import { memo, useState } from "react";
 import "./StreamSettings.css";
 
 export default memo(function StreamSettings({value, onSubmit}) {
-    const [widthMinimized, setWidthMinimized] = useState(value.minimized.width);
-    const [widthFullScreen, setWidthFullScreen] = useState(value.fullscreen.width);
-    const [frameRate, setFrameRate] = useState(value.frameRate);
-    const [fullscreenDefault, setFullscreenDefault] = useState(value.fullscreenDefault);
-    const [minimizedDefault, setMinimizedDefault] = useState(value.minimizedDefault);
+    const [scaleFactorMinimized, setScaleFactorMinimized] = useState(value.minimized.scaleFactor);
+    const [scaleFactorFullscreen, setScaleFactorFullscreen] = useState(value.fullscreen.scaleFactor);
+    const [frameRateMinimized, setFrameRateMinimized] = useState(value.minimized.frameRate);
+    const [frameRateFullscreen, setFrameRateFullscreen] = useState(value.fullscreen.frameRate);
     const [autoShare, setAutoShare] = useState(value.autoShare);
 
     function handleSubmit() {
         const newvalue = {
             minimized: {
-                width: widthMinimized
+                scaleFactor: scaleFactorMinimized,
+                frameRate: frameRateMinimized
             },
             fullscreen: {
-                width: widthFullScreen
+                scaleFactor: scaleFactorFullscreen,
+                frameRate: frameRateFullscreen
             },
-            frameRate: frameRate,
-            fullscreenDefault: fullscreenDefault,
-            minimizedDefault: minimizedDefault,
             autoShare: autoShare
         }
         onSubmit(newvalue);
@@ -31,20 +29,14 @@ export default memo(function StreamSettings({value, onSubmit}) {
             <label>Auto-Share stream to new users: </label>
             <input checked={autoShare} onChange={(e) => setAutoShare(e.target.checked)} type="checkbox"></input>
         </div>
-        <div>
-            <label>Use default stream size for fullscreen: </label>
-            <input checked={fullscreenDefault} onChange={(e) => setFullscreenDefault(e.target.checked)} type="checkbox"></input>
-        </div>
-        <div>
-            <label>Use default stream size for minimized: </label>
-            <input checked={minimizedDefault} onChange={(e) => setMinimizedDefault(e.target.checked)} type="checkbox"></input>
-        </div>
-        <label>Max-Width (Minimized): {widthMinimized} px</label>
-        <input disabled={minimizedDefault} onChange={(e) => setWidthMinimized(e.target.valueAsNumber)} value={widthMinimized} type="range" min={100} max={5000}></input>
-        <label>Max-Width (Fullscreen): {widthFullScreen} px</label>
-        <input disabled={fullscreenDefault} onChange={(e) => setWidthFullScreen(e.target.valueAsNumber)} value={widthFullScreen} type="range" min={300} max={5000}></input>
-        <label>Framerate: {frameRate} fps (Reselect Stream to take effect)</label>
-        <input onChange={(e) => setFrameRate(e.target.valueAsNumber)} value={frameRate} type="range" min={2} max={120}></input>
+        <label>Minimized Quality: {Math.round(scaleFactorMinimized*100)} %</label>
+        <input onChange={(e) => setScaleFactorMinimized(e.target.valueAsNumber)} value={scaleFactorMinimized} type="range" step={0.01} min={0.05} max={1}></input>
+        <label>Fullscreen Quality: {Math.round(scaleFactorFullscreen*100)} %</label>
+        <input onChange={(e) => setScaleFactorFullscreen(e.target.valueAsNumber)} value={scaleFactorFullscreen} type="range" step={0.01} min={0.05} max={1}></input>
+        <label>Minimized Framerate: {frameRateMinimized} fps</label>
+        <input onChange={(e) => setFrameRateMinimized(e.target.valueAsNumber)} value={frameRateMinimized} type="range" min={2} max={120}></input>
+        <label>Fullscreen Framerate: {frameRateFullscreen} fps</label>
+        <input onChange={(e) => setFrameRateFullscreen(e.target.valueAsNumber)} value={frameRateFullscreen} type="range" min={2} max={120}></input>
         <div className="stream-settings-controls"> 
             <button className="save-btn secondary-btn" onClick={handleSubmit}>Save</button>    
         </div>

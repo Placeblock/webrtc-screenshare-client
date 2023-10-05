@@ -33,3 +33,7 @@
     display: block;
     color: white;
 }
+
+.join-content{
+    color: var(--secondary-color);
+}

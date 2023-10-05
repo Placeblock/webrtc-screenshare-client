@@ -3,18 +3,29 @@ import { WebsocketContext } from "../../context/WebSocketContext";
 import useWebSocket from "../../context/WebSocketHook";
 import "./Peer.css";
 import { memo, useContext, useEffect, useRef, useState } from "react";
-import { faCircleStop, faMaximize, faPause, faPlay, faRotate } from "@fortawesome/free-solid-svg-icons";
+import { faDisplay, faMaximize, faPause, faPlay } from "@fortawesome/free-solid-svg-icons";
 import Bandwith from "./bandwith/Bandwith";
 
 const connectionConfig = {
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    iceServers: [{
+        urls: ["stun:stun.l.google.com:19302"]
+    }],
 }
 
-export default memo(function Peer({ peerUUID, peerName, currentStream, smallStream, autoShare }) {
+const StreamState = {
+    RUNNING: 0,
+    PAUSED: 1,
+    STOPPED: 2
+}
+
+export default memo(function Peer({ peerUUID, peerName, currentStream, streamSettings }) {
 
     const { sendMessage } = useContext(WebsocketContext);
 
-    const [connection, setConnection] = useState(new RTCPeerConnection(connectionConfig));
+    const [connection, setConnection] = useState(() => {
+        console.log("NEW CONNECTION")
+        return new RTCPeerConnection(connectionConfig);
+    });
     const remoteVideoElement = useRef(null);
     const [fullSize, _setFullSize] = useState(false);
     const [polite, _setPolite] = useState(null);
@@ -23,23 +34,21 @@ export default memo(function Peer({ peerUUID, peerName, currentStream, smallStre
         politeRef.current = polite;
         _setPolite(polite);
     }
-    const [sending, setSending] = useState(false);
+    const [streamState, setStreamState] = useState(StreamState.STOPPED);
     const politeNumber = useRef(Math.random());
-    const [politeSetPeer, setPoliteSetPeer] = useState(false);
+    const [politePeer, setPolitePeer] = useState(null);
     const makingOffer = useRef(false);
     const ignoreOffer = useRef(false);
     const [peerFullScreen, setPeerFullscreen] = useState(false);
 
     useEffect(() => {
-        if (connection.getSenders().length != 0) {
-            startSending();
-        }
-    }, [peerFullScreen]);
-
-    useEffect(() => {
         sendPeerMessage("polite_request", {number: politeNumber.current})
         return () => {
             stopSending();
+            /*if (connection != null) {
+                connection.close();
+            }*/
+            //setConnection(null);
         }
     }, []);
 
@@ -56,15 +65,41 @@ export default memo(function Peer({ peerUUID, peerName, currentStream, smallStre
         });
     }, [remoteVideoElement]);
 
+    useEffect(() => {
+        updateQuality();
+    }, [streamSettings, peerFullScreen]);
+
+    useEffect(() => {
+        if (streamState == StreamState.RUNNING) {
+            startSending();
+        }
+    }, [currentStream]);
+
+    function updateQuality() {
+        const data = streamSettings.getData(peerFullScreen);
+        connection.getSenders().forEach((sender) => {
+            if (sender.track != null && sender.track.kind === "video") {
+                const parameters = sender.getParameters();
+                if (!parameters.encodings || parameters.encodings.length===0) {
+                    parameters.encodings = [{}];
+                }
+                parameters.encodings[0].scaleResolutionDownBy = 1/data.scaleFactor;
+                parameters.encodings[0].maxFramerate = data.frameRate;
+                sender.setParameters(parameters)
+                    .then(() => console.log("Bitrate changed successfully"))
+                    .catch(e => console.error(e));
+            }
+        })
+    }
+
     function startSending() {
         stopSending();
-        const calcSmallStrem = smallStream!=null?smallStream:currentStream;
-        const startStream = peerFullScreen?currentStream:calcSmallStrem;
-        if (startStream == null) return;
-        for (const track of startStream.clone().getTracks()) {
-            connection.addTrack(track, startStream);
+        if (currentStream == null) return;
+        for (const track of currentStream.getTracks()) {
+            connection.addTrack(track, currentStream);
         }
-        setSending(true);
+        updateQuality();
+        setStreamState(StreamState.RUNNING);
     }
 
     function stopSending() {
@@ -74,20 +109,25 @@ export default memo(function Peer({ peerUUID, peerName, currentStream, smallStre
         connection.getSenders().forEach((sender) => {
             connection.removeTrack(sender);
         })
-        setSending(false);
+        setStreamState(StreamState.STOPPED);
     }
 
     function togglePaused() {
+        const enable = streamState == StreamState.PAUSED;
         connection.getSenders().forEach((sender) => {
             if (sender.track != null) {
-                sender.track.enabled = !sender.track.enabled;
+                sender.track.enabled = enable;
             }
         })
+        if (enable) {
+            setStreamState(StreamState.RUNNING);
+        } else {
+            setStreamState(StreamState.PAUSED);
+        }
     }
 
 
     function handleTrackEvent({ track, streams }) {
-        console.log("TRACK EVENT");
         track.onunmute = () => {
             remoteVideoElement.current.srcObject = streams[0];
         }
@@ -102,9 +142,9 @@ export default memo(function Peer({ peerUUID, peerName, currentStream, smallStre
     // NEGOTIATION
 
     async function handleNegotiationNeededEvent() {
-        console.log("NEGOTIATION NEEDED");
         try {
             makingOffer.current = true;
+            console.log("CREATE OFFER");
             await connection.setLocalDescription();
             sendPeerMessage("description", { description: JSON.stringify(connection.localDescription) });
         } catch (err) {
@@ -121,7 +161,7 @@ export default memo(function Peer({ peerUUID, peerName, currentStream, smallStre
     }
 
     function handleICECandidateEvent({ candidate }) {
-        console.log("ICE CANDIDATE");
+        console.log(candidate);
         sendPeerMessage("ice_candidate", { candidate: JSON.stringify(candidate) })
     }
 
@@ -133,7 +173,6 @@ export default memo(function Peer({ peerUUID, peerName, currentStream, smallStre
     });
 
     async function handlePeerMessage(data) {
-        console.log(data);
         if (data.action == "description") {
             const description = JSON.parse(data.description);
             const offerCollision =
@@ -148,24 +187,24 @@ export default memo(function Peer({ peerUUID, peerName, currentStream, smallStre
             await connection.setRemoteDescription(description);
             if (description.type === "offer") {
                 await connection.setLocalDescription();
+                console.log("SET LOCAL DESCRIPTION");
+                console.log(connection.localDescription);
                 sendPeerMessage("description", { description: JSON.stringify(connection.localDescription) });
             }
         } else if (data.action == "ice_candidate") {
             const candidate = JSON.parse(data.candidate);
-            try {
-                await connection.addIceCandidate(candidate);
-            } catch (err) {
-                if (!ignoreOffer.current) {
-                    throw err;
-                }
-            }
+            await connection.addIceCandidate(candidate).catch(e => {
+                console.log(e);
+            });
         } else if (data.action == "polite_request") {
             const senderNumber = data.number;
-            const impolite = politeNumber.current>senderNumber;
-            setPolite(!impolite);
-            sendPeerMessage("polite_response", {});
+            const selfPolite = politeNumber.current>senderNumber;
+            setPolite(selfPolite);
+            setPolitePeer(!selfPolite);
+            sendPeerMessage("polite_response", {polite: selfPolite});
         } else if (data.action == "polite_response") {
-            setPoliteSetPeer(true);
+            setPolite(!data.polite);
+            setPolitePeer(data.polite);
         } else if (data.action == "fullscreen") {
             const fullscreen = data.fullscreen;
             setPeerFullscreen(fullscreen);
@@ -173,10 +212,12 @@ export default memo(function Peer({ peerUUID, peerName, currentStream, smallStre
     }
 
     useEffect(() => {
-        if (polite!=null&&politeSetPeer&&autoShare) {
+        if (polite!=null&&politePeer!=null
+            &&streamSettings.autoShare
+            &&streamState == StreamState.STOPPED) {
             startSending();
         }
-    }, [polite, politeSetPeer]);
+    }, [polite, politePeer, streamSettings]);
 
     function sendPeerMessage(action, data) {
         sendMessage("peer", { receiver: peerUUID, message: { action: action, ...data } })
@@ -188,22 +229,16 @@ export default memo(function Peer({ peerUUID, peerName, currentStream, smallStre
             <Bandwith connection={connection} />
             <div className="peer-btns">
                 {peerFullScreen&&<FontAwesomeIcon className="peer-fullscreen" icon={faMaximize} />}
+                {streamState==StreamState.RUNNING||streamState==StreamState.PAUSED?
                 <button className="primary-btn"
-                    onClick={startSending} 
-                    disabled={polite==null||!politeSetPeer||currentStream==null}>
-                        {sending?<FontAwesomeIcon icon={faRotate} />:
-                            <FontAwesomeIcon icon={faPlay}/>}
-                </button>
+                        onClick={togglePaused} >
+                    <FontAwesomeIcon icon={streamState==StreamState.RUNNING?faPause:faPlay} />
+                </button>:
                 <button className="primary-btn"
-                    disabled={!sending}
-                    onClick={stopSending} >
-                    <FontAwesomeIcon icon={faCircleStop} />
-                </button>
-                <button className="primary-btn"
-                    disabled={!sending}
-                    onClick={togglePaused} >
-                    <FontAwesomeIcon icon={faPause} />
-                </button>
+                        onClick={startSending} 
+                        disabled={polite==null||politePeer==null||currentStream==null}>
+                    <FontAwesomeIcon icon={faDisplay}/>
+                </button>}
             </div>
         </div>
         <video className={fullSize?"fullSize":""} 

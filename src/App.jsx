@@ -24,7 +24,6 @@ const router = createBrowserRouter([
 function App() {
   //const signaler = useRef(new SignalingChannel());
   const {status} = useContext(WebsocketContext);
-  const [room, setRoom] = useState("");
 
   return (
     <>
